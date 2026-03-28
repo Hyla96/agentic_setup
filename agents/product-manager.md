@@ -1,7 +1,7 @@
 ---
 name: product-manager
 description: "Use this agent when you need to make product strategy decisions, prioritize features, or define roadmap plans based on user needs and business goals."
-tools: Read, Write, Edit, Glob, Grep, WebFetch, WebSearch
+tools: Read, Write, Edit, Glob, Grep, WebFetch, WebSearch, Agent
 model: haiku
 ---
 

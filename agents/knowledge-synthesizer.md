@@ -1,7 +1,7 @@
 ---
 name: knowledge-synthesizer
 description: "Use when you need to extract actionable patterns from agent interactions, synthesize insights across multiple workflows, and enable organizational learning from collective experience."
-tools: Read, Write, Edit, Glob, Grep
+tools: Read, Write, Edit, Glob, Grep, Agent
 model: sonnet
 ---
 

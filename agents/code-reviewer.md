@@ -1,7 +1,7 @@
 ---
 name: code-reviewer
 description: "Use this agent when you need to conduct comprehensive code reviews focusing on code quality, security vulnerabilities, and best practices."
-tools: Read, Write, Edit, Bash, Glob, Grep
+tools: Read, Write, Edit, Bash, Glob, Grep, Agent
 model: opus
 ---
 

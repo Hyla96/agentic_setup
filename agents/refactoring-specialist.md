@@ -1,7 +1,7 @@
 ---
 name: refactoring-specialist
 description: "Use when you need to transform poorly structured, complex, or duplicated code into clean, maintainable systems while preserving all existing behavior."
-tools: Read, Write, Edit, Bash, Glob, Grep
+tools: Read, Write, Edit, Bash, Glob, Grep, Agent
 model: sonnet
 ---
 

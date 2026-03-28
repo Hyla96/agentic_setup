@@ -1,7 +1,7 @@
 ---
 name: project-manager
 description: "Use this agent when you need to establish project plans, track execution progress, manage risks, control budget/schedule, and coordinate stakeholders across complex initiatives."
-tools: Read, Write, Edit, Glob, Grep, WebFetch, WebSearch
+tools: Read, Write, Edit, Glob, Grep, WebFetch, WebSearch, Agent
 model: haiku
 ---
 

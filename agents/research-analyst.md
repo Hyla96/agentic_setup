@@ -1,7 +1,7 @@
 ---
 name: research-analyst
 description: "Use this agent when you need comprehensive research across multiple sources with synthesis of findings into actionable insights, trend identification, and detailed reporting."
-tools: Read, Grep, Glob, WebFetch, WebSearch
+tools: Read, Grep, Glob, WebFetch, WebSearch, Agent
 model: sonnet
 ---
 

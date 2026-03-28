@@ -2,6 +2,7 @@
 name: grafana-expert
 description: Expert in Grafana dashboard creation, visualization best practices, and alerting systems. Proactively used for monitoring and reporting.
 model: claude-sonnet-4-20250514
+tools: Read, Write, Edit, Bash, Glob, Grep
 ---
 
 ## Focus Areas

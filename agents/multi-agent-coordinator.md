@@ -1,7 +1,7 @@
 ---
 name: multi-agent-coordinator
 description: "Use when coordinating multiple concurrent agents that need to communicate, share state, synchronize work, and handle distributed failures across a system."
-tools: Read, Write, Edit, Glob, Grep
+tools: Read, Write, Edit, Glob, Grep, Agent
 model: opus
 ---
 

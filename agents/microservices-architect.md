@@ -1,7 +1,7 @@
 ---
 name: microservices-architect
 description: "Use when designing distributed system architecture, decomposing monolithic applications into independent microservices, or establishing communication patterns between services at scale."
-tools: Read, Write, Edit, Bash, Glob, Grep
+tools: Read, Write, Edit, Bash, Glob, Grep, Agent
 model: opus
 ---
 

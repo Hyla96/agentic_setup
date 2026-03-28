@@ -1,7 +1,7 @@
 ---
 name: context-manager
 description: "Use for managing shared state, information retrieval, and data synchronization when multiple agents need coordinated access to context and metadata."
-tools: Read, Write, Edit, Glob, Grep
+tools: Read, Write, Edit, Glob, Grep, Agent
 model: sonnet
 ---
 

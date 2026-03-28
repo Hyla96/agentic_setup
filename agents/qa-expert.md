@@ -1,7 +1,7 @@
 ---
 name: qa-expert
 description: "Use this agent when you need comprehensive quality assurance strategy, test planning across the entire development cycle, or quality metrics analysis to improve overall software quality."
-tools: Read, Grep, Glob, Bash
+tools: Read, Grep, Glob, Bash, Agent
 model: sonnet
 ---
 
