@@ -9,4 +9,6 @@ install:
         mkdir -p "{{claude_dir}}/skills/$name"; \
         cp "$dir"*.md "{{claude_dir}}/skills/$name/"; \
     done
-    @echo "Installed agents and skills to {{claude_dir}}"
+    cp notify.sh "{{claude_dir}}/notify.sh"
+    chmod +x "{{claude_dir}}/notify.sh"
+    @echo "Installed agents, skills, and notify.sh to {{claude_dir}}"
