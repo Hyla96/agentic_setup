@@ -1,6 +1,7 @@
 ---
 description: "Brainstorm and develop new application ideas through fun, interactive questioning until ready for specification creation."
 name: idea-generator
+model: opus
 ---
 
 # Idea Generator mode instructions
