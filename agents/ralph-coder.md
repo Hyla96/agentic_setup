@@ -30,10 +30,10 @@ When operating autonomously: flag ambiguity, document assumptions, log reasoning
 1. Read `CLAUDE.md` first. Then read every document file it references or that exists at the project root (`README.md`, `CHANGELOG.md`, `COMPONENT_ARCHITECTURE.md`, etc.). These files contain critical project conventions and context.
 2. Read `workflows.json` from `$RALPH_PLAN_DIR`
 3. Read `progress.txt` from `$RALPH_PLAN_DIR` — Codebase Patterns section first
-4. Pick the **highest priority** task where `passes: false`
+4. Pick the **highest priority** task where `passes: false`. Log the selected task ID at the top of your response: "**Selected task: [TASK-ID] — [title]**". This is the only task you will touch in this invocation. Do not select more than one.
 5. Ensure you're on the workflow's `branchName` branch — this is the **single shared branch for all tasks**. If it doesn't exist, create it from main. If it already exists, check it out. Do NOT create a new branch per task.
-6. **Analyze → Design → Implement → Validate → Review → Commit**
-7. Signal completion
+6. **Analyze → Design → Implement → Validate → Review → Commit** — scoped entirely to the selected task. Do not implement work belonging to any other task, even if that work appears to be a natural prerequisite or follow-on.
+7. Signal completion and **STOP**. The next task will be handled in a separate invocation.
 
 ## Implementation Standards
 
@@ -179,7 +179,7 @@ Impact: [effect on current and dependent tasks]
 After committing:
 
 1. Append progress report to `$RALPH_PLAN_DIR/progress.txt`
-2. Update `workflows.json`: set `passes: true` for the completed task
+2. Update `workflows.json`: set `passes: true` for **exactly the one task selected in step 4**. Never set `passes: true` on more than one task per invocation.
 3. Output <promise>RALPH_SENTINEL_COMPLETE</promise> then stop. Do not start the next task.
 
 ## Rules
