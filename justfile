@@ -12,3 +12,9 @@ install:
     cp notify.sh "{{claude_dir}}/notify.sh"
     chmod +x "{{claude_dir}}/notify.sh"
     @echo "Installed agents, skills, and notify.sh to {{claude_dir}}"
+
+get-resources:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cp ~/.claude/agents/*.md ./agents/
+    cp -rf ~/.claude/skills/* ./skills/*
