@@ -30,10 +30,10 @@ When operating autonomously: flag ambiguity, document assumptions, log reasoning
 1. Read `CLAUDE.md` first. Then read every document file it references or that exists at the project root (`README.md`, `CHANGELOG.md`, `COMPONENT_ARCHITECTURE.md`, etc.). These files contain critical project conventions and context.
 2. Read `workflows.json` from `$RALPH_PLAN_DIR`
 3. Read `progress.txt` from `$RALPH_PLAN_DIR` — Codebase Patterns section first
-4. Pick the **highest priority** task where `passes: false`. Log the selected task ID at the top of your response: "**Selected task: [TASK-ID] — [title]**". This is the only task you will touch in this invocation. Do not select more than one.
+4. Pick the **highest priority** task where `passes: false`
 5. Ensure you're on the workflow's `branchName` branch — this is the **single shared branch for all tasks**. If it doesn't exist, create it from main. If it already exists, check it out. Do NOT create a new branch per task.
-6. **Analyze → Design → Implement → Validate → Review → Commit** — scoped entirely to the selected task. Do not implement work belonging to any other task, even if that work appears to be a natural prerequisite or follow-on.
-7. Signal completion and **STOP**. The next task will be handled in a separate invocation.
+6. \*_Analyze → Design → Implement → Validate → Review → Commit_
+7. Signal completion
 
 ## Implementation Standards
 
@@ -85,11 +85,13 @@ Log exact error output in progress.txt whenever a retry was needed.
 Before committing, run `git diff --cached` (or `git diff` if not yet staged) and verify:
 
 ### Correctness
+
 - Does every acceptance criterion have corresponding code changes?
 - Are there logic errors visible in the diff?
 - Are edge cases handled?
 
 ### Code Quality
+
 - Are there unused imports, dead code, or hardcoded values that should be configurable?
 - Is cyclomatic complexity reasonable (< 10 per function)?
 - Is there unnecessary duplication that should be extracted?
@@ -97,18 +99,21 @@ Before committing, run `git diff --cached` (or `git diff` if not yet staged) and
 - Does the code follow patterns documented in Codebase Patterns?
 
 ### Security
+
 - Input validation present at system boundaries?
 - No injection vulnerabilities (SQL, command, XSS)?
 - Sensitive data handled properly (no logging secrets, proper encryption)?
 - Authentication/authorization checks in place where needed?
 
 ### Performance
+
 - No N+1 queries or unnecessary database round-trips?
 - Appropriate caching where beneficial?
 - No resource leaks (unclosed connections, file handles)?
 - Efficient algorithm choices for the data scale?
 
 ### Testing
+
 - Are new code paths covered by tests?
 - Do tests verify behavior, not implementation details?
 - Are edge cases tested?
@@ -158,6 +163,7 @@ Stop and log a hard blocker ONLY when:
 - **Technical impossibility**: Environment constraints prevent implementation
 
 Log format:
+
 ```
 ### BLOCKER - [Task ID]
 Type: [Block/Access/Gap/Technical]
@@ -173,13 +179,14 @@ Impact: [effect on current and dependent tasks]
 - Multi-line commit messages: use `git commit -m "subject" -m "body paragraph"` (multiple `-m` flags).
 - If a pre-commit hook reformats files, re-stage the changed files and create a NEW commit (do not amend).
 - Commit message format: `feat: [description]` for features, `fix: [description]` for fixes, `refactor: [description]` for restructuring.
+- Add yourself as a co-author in the commit message.
 
 ## Completion
 
 After committing:
 
 1. Append progress report to `$RALPH_PLAN_DIR/progress.txt`
-2. Update `workflows.json`: set `passes: true` for **exactly the one task selected in step 4**. Never set `passes: true` on more than one task per invocation.
+2. Update `workflows.json`: set `passes: true` for the completed task
 3. Output <promise>RALPH_SENTINEL_COMPLETE</promise> then stop. Do not start the next task.
 
 ## Rules
