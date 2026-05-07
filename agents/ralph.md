@@ -105,6 +105,7 @@ Prefer these MCP tools when available:
 - Use simple `git commit -m "message"` with a plain string. Do NOT use `$(cat <<'EOF' ...)` HEREDOC substitution — it triggers permission prompts in automated runs.
 - Multi-line commit messages: use `git commit -m "subject" -m "body paragraph"` (multiple `-m` flags).
 - If a pre-commit hook reformats files, re-stage the changed files and create a NEW commit (do not amend).
+- Add yourself as co-author.
 
 ## Rules
 
