@@ -1,7 +1,7 @@
 ---
 name: pr-ship
 metadata:
-  version: 1.0.0
+  version: 1.0.2
 description: |
   Finalize work into a pull request: commit and push anything that isn't
   committed/pushed yet, then create or update the PR with a clear, human-readable
@@ -49,20 +49,39 @@ Look for a ticket ID (pattern: `[A-Z][A-Z0-9]+-[0-9]+`, e.g. `ST-1928`) in this 
 2. The existing PR title, if a PR exists
 3. Recent commit messages on this branch
 
-If none is found, **ask the user for the ticket number**. Offer a "no ticket" option in case the change genuinely has none; in that case skip the ticket prefix entirely rather than inventing one.
+## Step 3: Ask the user (hard gate — do this before touching git)
 
-## Step 3: Commit — only if there is something to commit
+Based on Steps 1–2, determine which of these two questions apply:
 
-If `git status --porcelain` is empty, skip to Step 4.
+1. **Branch question** — applies whenever `git status --porcelain` was non-empty. Ask: _"Commit on the current branch (`<name>`), or create a new branch?"_ This question is **mandatory** when there are uncommitted changes. Never skip it because the answer seems obvious — being on a feature branch already, having a "sensible" branch name, or the change looking small are NOT reasons to skip. The user decides, not you.
+2. **Ticket question** — applies only when Step 2 found no ticket anywhere. Ask for the ticket number and offer a "no ticket" option in case the change genuinely has none; in that case skip the ticket prefix entirely rather than inventing one.
 
-If there are uncommitted changes, **ask the user**: commit on the current branch, or create a new branch?
+Ask each applicable question as its own separate question tool call (e.g. AskUserQuestion), branch question first. Do not bundle them into one call.
+
+If a question tool call fails (invalid parameters, error, anything), fix the call and **retry that same question**. A failed call is not an answer. Do not proceed past this step while any applicable question is unanswered — committing with uncommitted changes present but no branch answer is a failure of this skill.
+
+## Step 4: Commit — only if there is something to commit
+
+If `git status --porcelain` was empty, skip to Step 5.
+
+Otherwise act on the branch answer from Step 3:
 
 - **Current branch**: stage and commit there.
 - **New branch**: remember the current branch name first — it becomes the **base of the PR**. Then create the new branch (sensible name including the ticket, e.g. `st-1928-hotfix-payment-retry`), and commit there.
 
-Write the commit message yourself from the diff (`git diff` / `git diff --staged`). Keep it conventional and short, ticket first, matching the title style: `ST-1928 Fix payment retry loop`. Stage intentionally (`git add <paths>`) — don't blindly `git add -A` if the status shows unrelated junk (build artifacts, local config); mention anything you left out.
+Write the commit message yourself from the diff (`git diff` / `git diff --staged`). Keep it conventional and short, ticket first, matching the title style: `ST-1928 Fix payment retry loop`. Always include the Claude Code attribution at the end of the commit message:
 
-## Step 4: Push
+```
+ST-1928 Fix payment retry loop
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+Stage intentionally (`git add <paths>`) — don't blindly `git add -A` if the status shows unrelated junk (build artifacts, local config); mention anything you left out.
+
+## Step 5: Push
 
 - If the branch has no upstream: `git push -u origin <branch>`.
 - Otherwise, if `git cherry` shows unpushed commits: `git push`.
@@ -70,11 +89,11 @@ Write the commit message yourself from the diff (`git diff` / `git diff --staged
 
 If the push is rejected because the remote is ahead, stop and tell the user — do not force-push or auto-rebase without being asked.
 
-## Step 5: Create or update the PR
+## Step 6: Create or update the PR
 
 Determine the base branch:
 
-- If you created a new branch in Step 3, the base is the branch the user was on before.
+- If you created a new branch in Step 4, the base is the branch the user was on before.
 - If a PR already exists, keep its existing base.
 - Otherwise use the repo default branch (`gh repo view --json defaultBranchRef`).
 
@@ -100,13 +119,16 @@ The body is for humans, not machines. Plain language, no jargon walls, no bullet
 
 ```markdown
 ## What
+
 One to three sentences: what does this change, in plain words.
 
 ## Why
+
 Why this change was needed — the problem, bug, or request behind it.
 Link the Jira ticket here (e.g. ST-1928).
 
 ## How
+
 Only include this section when the approach isn't obvious from the diff:
 a tricky implementation choice, a migration, a workaround, a trade-off.
 For a simple, self-explanatory change, leave the section out entirely.
@@ -119,39 +141,52 @@ Rules for the body:
 - No filler ("This PR aims to…", "In order to…"), no restating the file list — reviewers can see the diff.
 - Skip "How" when the change is trivial. A one-line config fix does not need an architecture section.
 - Mention anything the reviewer must do or know (new env var, migration to run, follow-up ticket) — that's the most valuable content a body can have.
+- End the body with the Claude Code attribution as the last line, separated by a blank line:
+  `🤖 Generated with [Claude Code](https://claude.com/claude-code)`
+  Keep it even when updating an existing PR body.
 
 **Example (small fix):**
 
 ```markdown
 ## What
+
 Retries failed payment webhooks up to 3 times with backoff instead of failing immediately.
 
 ## Why
+
 Payments were marked failed during brief provider outages, forcing manual replays (ST-1928).
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
 ```
 
 **Example (bigger change, "How" earns its place):**
 
 ```markdown
 ## What
+
 Adds CSV export to the reports page.
 
 ## Why
+
 Finance exports report data monthly and currently copies it by hand from the UI (APP-204).
 
 ## How
+
 Export runs as a background job and emails a download link, because large reports
 were timing out when generated in the request. Needs the new `EXPORT_BUCKET` env var in staging.
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
 ```
 
-## When to ask the user
+## Self-check before creating/updating the PR
 
-Ask only these, and only when the condition applies:
+Stop and verify, in order:
 
-1. **Ticket number** — only if no ticket was found in branch, PR title, or commits. Offer "no ticket".
-2. **New branch or current branch** — only if there are uncommitted changes.
+- [ ] Were there uncommitted changes at Step 1? Then the **branch question was asked and answered by the user** — not inferred, not skipped, not lost to a failed tool call.
+- [ ] Is there a ticket in the title, or did the user explicitly say "no ticket"?
+- [ ] Does the body follow What / Why (/ How only if needed) and read like it was written for a human?
 
-Use the AskUserQuestion tool (or the harness equivalent) with short options when available; otherwise ask in plain text. Everything else — commit message, branch name, base branch, title, body — you decide and then report what you did.
+If any box is unchecked, go back and fix it before running `gh pr create` / `gh pr edit`. Everything the user wasn't asked about — commit message, branch name, base branch, title, body — you decide and then report what you did.
 
 ## Finish
 
