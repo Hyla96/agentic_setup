@@ -80,6 +80,7 @@ Interview the user about **every aspect** of the plan until you reach shared und
 - **Solution boundaries:** What should it do? What should it NOT do? Where does scope end?
 - **Edge cases:** What happens when X fails? What about empty states? Concurrent access?
 - **Integration:** How does this connect to existing features? What breaks if we get it wrong?
+- **Compatibility and versioning:** Does this change an API or schema that other code or systems consume? What breaks for existing callers? If the contract is versioned: which version does this introduce, which previously shipped versions must stay served alongside it, and what is each one's deprecation policy? A breaking change ships as a new version next to the old one, never as an in-place edit or a switch that turns the old one off.
 - **Priorities:** If we can only ship half of this, which half? What's the MVP?
 
 ### Format Questions Like This
@@ -194,6 +195,7 @@ Each task should be small enough to implement in one focused session.
 - [ ] Specific verifiable criterion
 - [ ] Another criterion
 - [ ] Typecheck/lint passes
+- [ ] **[if a versioned API/schema changed]** Every previously shipped version is still served unchanged — its existing tests pass without modification
 - [ ] **[UI tasks only]** Verify in browser using dev-browser skill
 ```
 
@@ -211,6 +213,7 @@ Document the decisions made during the interview:
 - **Architectural decisions**: Patterns, approaches, trade-offs chosen
 - **Schema changes**: Database or data model changes
 - **API contracts**: Endpoint shapes, request/response formats
+- **Compatibility and versioning**: What breaks for existing callers; for a versioned API or schema, the version this introduces, every previously shipped version that stays served alongside it, and each one's deprecation policy
 - **Technical clarifications**: Answers to technical questions from the interview
 
 Do NOT include specific file paths or code snippets -- they outdated quickly.
@@ -324,7 +327,7 @@ Before saving the spec:
 - [ ] User Stories section heading includes `[DRAFT]` marker
 - [ ] Tasks are small and specific with verifiable acceptance criteria
 - [ ] Tasks section heading includes `[DRAFT]` marker
-- [ ] Implementation decisions documented (modules, interfaces, schemas, API contracts)
+- [ ] Implementation decisions documented (modules, interfaces, schemas, API contracts, compatibility and versioning)
 - [ ] Testing decisions documented (what to test, how, prior art)
 - [ ] Non-goals section defines clear boundaries
 - [ ] `## Research Needed` section lists specific topics for the researcher agent

@@ -44,7 +44,7 @@ user-invocable: true|false  # Whether users can trigger via /skill-name
 ### Ralph Autonomous Agent System
 
 Ralph (`agents/ralph.md`) is the core autonomous coding agent. It works with:
-- `workflows.json` — Task definitions produced by `spec-synth` or `prd-synth` agents
+- `workflows.json` — Task definitions produced by the `/spec-synth` skill or the `prd-synth` agent
 - `progress.txt` — Tracks completion state
 - A shared feature branch (one branch per workflow, not per task)
 
@@ -54,7 +54,7 @@ The spec creation flow is a multi-step pipeline:
 1. `/spec` — User-invocable skill that interviews the user and generates a draft spec at `.ralph/specs/<feature>/spec-source.md`
 2. `spec-researcher` agent — Enriches the draft with web research and codebase analysis
 3. `/spec-clarify` or `/spec-finalize` — Resolves open questions and produces a finalized spec
-4. `spec-synth` agent — Converts finalized spec into `workflows.json` for Ralph
+4. `/spec-synth` skill — Converts finalized spec into `workflows.json` for Ralph
 
 A parallel PRD pipeline exists (`prd-researcher` → `/spec-finalize` → `prd-synth` → `prd.json`).
 

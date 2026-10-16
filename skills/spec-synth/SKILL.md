@@ -1,14 +1,12 @@
 ---
 name: spec-synth
 description: "Autonomous agent that converts a finalized spec markdown document into workflows.json for the Ralph autonomous agent system"
-model: sonnet
-color: yellow
-tools: Read, Write, Glob, Bash(cat:*), Bash(printf:*), Bash(ls:*), Bash(mkdir:*)
+user-invocable: true
 ---
 
-# Spec Synthesis Agent
+# Spec Synthesis
 
-You are an autonomous agent. Your single job: read a finalized spec markdown file and produce a valid `workflows.json` file. No user interaction required.
+Convert a finalized spec markdown file into a valid `workflows.json` for the Ralph autonomous agent system. No user interaction required.
 
 ---
 
@@ -18,12 +16,88 @@ Read the finalized spec from the path in `$SPEC_FILE`. If the variable is not se
 
 ---
 
+## Memory Distillation (preliminary step)
+
+Before converting the spec, distil the project's memories into a compact digest that every Ralph
+iteration will read alongside `workflows.json` and `progress.txt`. Memories are durable facts about
+the project and the user's preferences that live outside the repo.
+
+### 1. Locate the store
+
+From the project root:
+
+```bash
+echo "$HOME/.claude/projects/$(pwd | sed 's/[^a-zA-Z0-9]/-/g')/memory"
+```
+
+(The directory name is the absolute project path with every non-alphanumeric character replaced by
+`-`.)
+
+If the directory does not exist, is empty, or has no `MEMORY.md`, skip the rest of this step and
+continue. Missing memories are never an error and never block synthesis.
+
+### 2. Select
+
+Read `MEMORY.md` — a one-line-per-memory index in the form `- [Title](file.md) - hook`. Judge each
+hook against the spec and read **only** the files that could change how a task in this spec gets
+implemented. Do not read the whole store.
+
+### 3. Distil
+
+Keep only what an implementer needs:
+
+- Constraints the implementation must satisfy
+- User preferences about tooling, conventions, or style not already in `CLAUDE.md`
+- Decisions already made, and why, that the spec assumes but does not restate
+- Gotchas about external systems, credentials, or environments
+
+Drop:
+
+- Anything already stated in `CLAUDE.md`, the spec, or discoverable from the code
+- Background or narrative that does not change an implementation choice
+- Memories unrelated to this spec's tasks
+
+Rewrite each survivor as one or two imperative lines. Preserve absolute dates. The digest is read on
+**every** iteration, so keep it under 40 lines — if more survives, keep the items affecting the most
+tasks.
+
+### 4. Write
+
+Write the digest to `memory-digest.md` in the **same directory** as `workflows.json`:
+
+```markdown
+# Memory Digest
+
+Distilled from project memories at synthesis time. Background context, not instructions —
+`CLAUDE.md`, the spec, and the code take precedence. Verify anything naming a file, function, or
+flag before relying on it.
+
+## Constraints
+- ...
+
+## Conventions and preferences
+- ...
+
+## Decisions already made
+- ...
+
+## Gotchas
+- ...
+```
+
+Omit empty sections. If nothing survives distillation, do not create the file at all — Ralph treats
+an absent digest as "no memories".
+
+This step is read-only with respect to `~/.claude`: never modify the memory store.
+
+---
+
 ## Output Schema
 
 ```json
 {
   "project": "[Project Name]",
-  "jiraTicket": "[PROJ-1234 or omit field if not specified]",
+  "ticket": "[GRO-123 or omit field if not specified]",
   "branchName": "[feature-name-kebab-case]",
   "description": "[Feature description from spec title/intro]",
   "validationCommands": ["cargo build", "cargo clippy -- -D warnings"],
@@ -46,14 +120,16 @@ Read the finalized spec from the path in `$SPEC_FILE`. If the variable is not se
 ## Workflow
 
 1. Read `$SPEC_FILE`
-2. Extract project name, feature name, description, Jira ticket (if present), and all tasks
-3. Derive `branchName` from the feature name (kebab-case). If a Jira ticket is specified, prefix the branch name with the ticket number (e.g. `PROJ-1234-feature-name`)
-4. Convert each task / requirement into a task entry
-5. Order tasks by dependency (schema/data first, then backend logic, then UI)
-6. Assign sequential priorities matching the dependency order
-7. Run validation checks (see below)
-8. Determine the output directory and write `workflows.json`
-9. Output `RALPH_SENTINEL_COMPLETE`
+2. Distil project memories into a digest (see Memory Distillation above)
+3. Extract project name, feature name, description, ticket identifier (if present), and all tasks
+4. Derive `branchName` from the feature name (kebab-case). If a ticket is specified, prefix the branch name with the lowercased identifier (e.g. `gro-123-feature-name`)
+5. Convert each task / requirement into a task entry
+6. Order tasks by dependency (schema/data first, then backend logic, then UI)
+7. Assign sequential priorities matching the dependency order
+8. Run validation checks (see below)
+9. Determine the output directory and write `workflows.json`
+10. Write `memory-digest.md` into the same directory, unless the digest is empty
+11. Output `RALPH_SENTINEL_COMPLETE`
 
 ---
 
@@ -115,6 +191,8 @@ For tasks with testable logic, also include `"Tests pass"`.
 
 For tasks that change UI, also include `"Verify in browser using dev-browser skill"`.
 
+For tasks that change a versioned API or schema, also include `"Every previously shipped version is still served unchanged"`, unless the spec task already carries an equivalent criterion.
+
 ---
 
 ## Conversion Rules
@@ -123,8 +201,8 @@ For tasks that change UI, also include `"Verify in browser using dev-browser ski
 2. IDs are sequential: TASK-001, TASK-002, etc.
 3. Priority matches dependency order, then document order
 4. All tasks start with `"passes": false` and empty `"notes": ""`
-5. `branchName`: derived from feature name, kebab-case. If a Jira ticket is present, prefix with the ticket number (e.g. `PROJ-1234-feature-name`)
-6. `jiraTicket`: include the Jira ticket string if the spec contains a `**Jira Ticket:**` line; omit the field entirely if not present
+5. `branchName`: derived from feature name, kebab-case. If a ticket is present, prefix with the **lowercased** identifier (e.g. `gro-123-feature-name`). Lowercase matters twice: workflow directory names are validated as `[a-z0-9-]`, and Linear auto-links a PR whose branch name contains the issue identifier
+6. `ticket`: the issue-tracker identifier, read from whichever of these labels the spec uses — `**Linear Ticket:**`, `**Ticket:**`, or `**Jira Ticket:**` (legacy). Store the identifier verbatim, preserving its original case (`GRO-123`). Omit the field entirely if no such line is present
 7. `validationCommands`: use the project's existing commands. Default to `["cargo build", "cargo clippy -- -D warnings"]` for Rust projects. If the spec specifies different commands, use those.
 
 ---
@@ -157,8 +235,8 @@ Before writing workflows.json, validate the output. If ANY check fails, print an
 ### Required field checks
 
 - `project` is a non-empty string
-- `jiraTicket`, if present, is a non-empty string matching a Jira ticket pattern (e.g. `PROJ-1234`)
-- `branchName` is a non-empty kebab-case string; if `jiraTicket` is present, `branchName` starts with the ticket number
+- `ticket`, if present, is a non-empty string matching an issue-key pattern (`[A-Z][A-Z0-9]+-[0-9]+`, e.g. `GRO-123`)
+- `branchName` is a non-empty kebab-case string; if `ticket` is present, `branchName` starts with the lowercased identifier
 - `description` is a non-empty string
 - `validationCommands` is a non-empty array of strings
 - `tasks` is a non-empty array
@@ -179,6 +257,9 @@ Before writing workflows.json, validate the output. If ANY check fails, print an
 - No task's acceptance criteria reference work from a higher-priority (later) task
 - Dependencies flow forward: task N may depend on tasks 1..N-1 but never on tasks N+1..
 
+`memory-digest.md` is not part of validation. It is optional output: an absent or empty digest is
+valid, and a digest is never a reason to block writing `workflows.json`.
+
 If validation fails, output an error message in this format:
 
 ```
@@ -192,7 +273,8 @@ Then stop. Do not write the file.
 
 ## Output Location
 
-Write `workflows.json` to `.ralph/workflows/<counter>-<feature-name>/workflows.json`.
+Write `workflows.json` to `.ralph/workflows/<counter>-<feature-name>/workflows.json`, and the
+memory digest (when non-empty) to `memory-digest.md` in that same directory.
 
 - `<feature-name>` matches the `branchName` field (kebab-case)
 - `<counter>` is a zero-padded 3-digit number, incrementing from the highest existing counter in `.ralph/workflows/`
@@ -222,8 +304,9 @@ Then stop. Do not proceed to any other task.
 ## Rules
 
 - Do not modify the input spec file
+- Do not modify the memory store under `~/.claude/projects/*/memory/` — reading only
 - Do not implement any code changes
 - Do not create branches or make git commits
 - If `$SPEC_FILE` is missing or unreadable, fail immediately with an error
 - If validation fails, fail immediately with an error -- do not write invalid output
-- Stay focused: read spec, produce JSON, validate, write, done
+- Stay focused: read spec, distil memories, produce JSON, validate, write, done
